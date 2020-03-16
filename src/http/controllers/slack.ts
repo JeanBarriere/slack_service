@@ -1,6 +1,7 @@
 import { RequestHandler, Request, Response } from "express"
 import { EventBus } from "src/events"
-import SlackService, { MessageListener, MessageEvent } from "src/slack"
+import SlackService from "src/slack"
+import { MessageListener, MessageEvent } from 'src/slack/Messages'
 
 export class SlackServiceController {
   private readonly _bus: EventBus
