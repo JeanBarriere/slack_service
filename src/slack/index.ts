@@ -16,7 +16,8 @@ export interface MessageEvent {
 
 export interface MessageListener {
   subscriptionID: string
-  channel: string
+  channel?: string
+  mention?: boolean
   pattern: RegExp
 }
 
@@ -74,7 +75,8 @@ export default class SlackService {
 
   private getListenerForEvent (event: MessageEvent): MessageListener | null {
     for (const listener of this._listeners) {
-      if (listener.channel === event.channel && listener.pattern.test(event.text)) {
+      if ((event.type === 'app_mention' && listener.mention && listener.pattern.test(event.text)) ||
+          (event.type === 'message' && (!event.subtype || event.subtype === '') && listener.channel === event.channel && listener.pattern.test(event.text))) {
         return listener
       }
     }
@@ -104,6 +106,18 @@ export default class SlackService {
   }
 
   public removeMessageListener(subscriptionID: string) {
+    const index = this._listeners.findIndex(l => l.subscriptionID === subscriptionID)
+    if (index >= 0) {
+      this._listeners.splice(index, 1)
+    }
+  }
+
+  public async addMentionListener (appID: string, subscriptionID: string, pattern: string): Promise<void> {
+    const listener: MessageListener = { subscriptionID, mention: true, pattern: new RegExp(pattern) }
+    this._listeners.push(listener)
+  }
+
+  public removeMentionListener(subscriptionID: string) {
     const index = this._listeners.findIndex(l => l.subscriptionID === subscriptionID)
     if (index >= 0) {
       this._listeners.splice(index, 1)

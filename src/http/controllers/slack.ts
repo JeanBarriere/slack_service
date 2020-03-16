@@ -18,8 +18,12 @@ export class SlackServiceController {
 
     routes.set('/hears', async (req, res) => this.hears(req, res))
     routes.set('/unhears', async (req, res) => this.unhears(req, res))
-    routes.set('/hears/reply', async (req, res) => this.hears_reply(req, res))
-    routes.set('/hears/close', async (req, res) => this.hears_close(req, res))
+    routes.set('/hears/reply', async (req, res) => this.event_reply(req, res))
+    routes.set('/hears/close', async (req, res) => this.event_close(req, res))
+    routes.set('/receives', async (req, res) => this.receives(req, res))
+    routes.set('/unreceives', async (req, res) => this.unreceives(req, res))
+    routes.set('/receives/reply', async (req, res) => this.event_reply(req, res))
+    routes.set('/receives/close', async (req, res) => this.event_close(req, res))
     routes.set('/send', async (req, res) => this.send(req, res))
 
     return routes;
@@ -48,7 +52,25 @@ export class SlackServiceController {
     res.sendStatus(200);
   }
 
-  public async hears_reply(req: Request, res: Response): Promise<void> {
+  public async receives(req: Request, res: Response): Promise<void> {
+    const appID = req.body.appID as string
+    const subscriptionID = req.body.subscriptionID as string
+    const pattern = req.body.pattern as string
+
+    await this._service.addMentionListener(appID, subscriptionID, pattern)
+
+    res.sendStatus(200);
+  }
+
+  public async unreceives(req: Request, res: Response): Promise<void> {
+    const subscriptionID = req.body.subscriptionID as string
+
+    await this._service.removeMentionListener(subscriptionID)
+
+    res.sendStatus(200);
+  }
+
+  public async event_reply(req: Request, res: Response): Promise<void> {
     const appID = req.body.appID as string
     const eventID = req.body.eventID as string
     const text = req.body.text as string
@@ -58,7 +80,7 @@ export class SlackServiceController {
     res.sendStatus(200);
   }
 
-  public async hears_close(req: Request, res: Response): Promise<void> {
+  public async event_close(req: Request, res: Response): Promise<void> {
     const eventID = req.body.eventID as string
 
     await this._service.removeEvent(eventID)
